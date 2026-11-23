@@ -26,7 +26,7 @@ e somar o que deve ser repassado por conta (Itaú e Bradesco).
 Os PDFs são lidos e conferidos **no navegador**, com regras fixas e sem IA: nada é enviado nem armazenado.
 
 **Endereço:** <https://hud.specialimoveis.workers.dev> (Worker `hud`, aberto, sem login).
-Também pode rodar na Vercel: ver [docs/DEPLOY-VERCEL.md](docs/DEPLOY-VERCEL.md).
+Vercel: só o esqueleto, para ligar no futuro ([docs/DEPLOY-VERCEL.md](docs/DEPLOY-VERCEL.md)).
 
 > **Status:** em uso com lotes reais. Regras em [docs/REGRAS-CONFERENCIA.md](docs/REGRAS-CONFERENCIA.md);
 > perguntas em aberto com o financeiro em [CLAUDE.md](CLAUDE.md#pendências-aguardando-o-negócio).
