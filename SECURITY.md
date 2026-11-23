@@ -12,7 +12,7 @@
 | CSRF | Exige `Origin` igual, `X-Requested-With` e `Content-Type: application/json` | `worker/index.ts` |
 | Abuso/custo | Rate limiting por usuário (10/min), limites de tamanho, `max_output_tokens`, timeout | `wrangler.jsonc`, `worker/` |
 | Validação | Entrada e saída validadas com zod (objetos estritos) | `shared/contrato.ts` |
-| Segredos | `OPENAI_API_KEY`, `USUARIOS`, `SESSION_SECRET` só como Secret; `usuarios.local.json` (só hashes) fora do Git; `.dev.vars`/`.env` no `.gitignore` | — |
+| Segredos | `OPENAI_API_KEY`, `USUARIOS`, `SESSION_SECRET` só como Secret; `.dev.vars`/`.env` no `.gitignore` | — |
 | Cache | `Cache-Control: no-store` em toda a API | `worker/index.ts` |
 | Cabeçalhos | CSP restrita, HSTS, nosniff, Referrer-Policy, anti-clickjacking | `public/_headers` |
 | XSS | Conteúdo de PDF/IA renderizado só como texto pelo React | `src/components/` |
@@ -22,7 +22,6 @@
 
 ## Checklist de implantação
 
-- [ ] `npm run usuarios -- listar` mostra só as pessoas autorizadas; lista publicada ([docs/DEPLOY-TESTE.md](docs/DEPLOY-TESTE.md)).
 - [ ] Senhas entregues por canal privado; ninguém compartilha a própria senha.
 - [ ] `SESSION_SECRET` (≥ 32 caracteres aleatórios) via `wrangler secret put`.
 - [ ] Sem login, `/api/eu` retorna 401; senha errada é recusada.

@@ -32,7 +32,6 @@
 
   // Valores de produção. Em desenvolvimento local são sobrescritos por .dev.vars.
   // Secrets (nunca aqui):
-  //   USUARIOS        → npm run usuarios -- publicar
   //   SESSION_SECRET  → npx wrangler secret put SESSION_SECRET
   //   OPENAI_API_KEY  → npx wrangler secret put OPENAI_API_KEY
   "vars": {

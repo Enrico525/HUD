@@ -28,8 +28,7 @@ sistema NIDO. A conferência roda **no navegador, com regras fixas e sem IA** (`
   `/api/analisar` (OpenAI, sem uso). Não reabrir essa rota sem login: viraria proxy aberto para a chave da OpenAI.
 
 - Stack: React + Vite + TypeScript, Cloudflare Worker com Static Assets (uma app, mesmo domínio).
-- Autenticação: **nome + senha gerada** pelo administrador, feita pelo próprio Worker (`worker/login.ts`). Sem Google, Auth0 ou Cloudflare Access (o usuário não pode usar Zero Trust). Senhas são aleatórias (16 caracteres, ~79 bits, `shared/credenciais.ts`), por isso SHA-256 simples basta — **nunca permitir senha escolhida por pessoa sem trocar para hash lento**. Lista `nome → hash` no Secret `USUARIOS`, gerida por `npm run usuarios` (`scripts/usuarios.ts`; arquivo local `usuarios.local.json` fora do Git). Sessão = JWT HS256 em cookie `__Host-sessao` (HttpOnly, Secure, SameSite=Strict, 8 h), assinado com `SESSION_SECRET`.
-- Sem área admin no app: acessos gerenciados pelo script + `publicar` (vale na hora). Sem “esqueci a senha” automático; sem 2FA (pode ser acrescentado com TOTP).
+- Script de cadastro de usuários (`scripts/usuarios.ts`) removido (11/2026), junto com o login. `shared/credenciais.ts` continua porque o Worker ainda valida sessão em `/api/*`.
 - Assets estáticos são públicos (não contêm dados); só a API exige login.
 - Contrato frontend↔Worker em `shared/contrato.ts` (zod). O mesmo schema vira o JSON Schema enviado à OpenAI.
 - Conferência de referências: todo `trecho_literal` citado pela IA é procurado na página indicada (`src/conferencia.ts`).

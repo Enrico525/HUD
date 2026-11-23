@@ -35,10 +35,10 @@ Erros da API: `{ "erro": CodigoErro }` (ver `shared/contrato.ts`). O frontend tr
 
 ## Autenticação sem banco de dados
 
-- **Credencial:** senha aleatória gerada pelo administrador (`npm run usuarios`); só o hash SHA-256 vai para o Secret `USUARIOS`.
+- **Credencial:** não há cadastro de usuários: o app abre sem login e a lista `USUARIOS` fica vazia.
 - **Autorização:** o usuário precisa continuar em `USUARIOS` em toda requisição.
 - **Sessão:** JWT HS256 no cookie `__Host-sessao` (HttpOnly, Secure, SameSite=Strict), assinado com o Secret `SESSION_SECRET`. Expira em 8 h.
-- **Revogação:** `npm run usuarios -- remover` + `publicar` (imediato) ou trocar `SESSION_SECRET` (derruba todos).
+- **Revogação:** trocar `SESSION_SECRET` derruba qualquer sessão.
 - Os arquivos estáticos (HTML/JS/CSS/logo) são públicos e não contêm dados; tudo que tem dado passa pela API.
 
 ## Fluxo da conferência (todo no navegador)

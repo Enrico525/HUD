@@ -2,7 +2,7 @@
 export interface Ambiente {
   AMBIENTE: string;
   /**
-   * Secret: JSON { "<nome>": "<hash da senha>" }. Gerenciado por `npm run usuarios`.
+   * Secret: JSON { "<nome>": "<hash da senha>" }. Sem cadastro hoje (app sem login): fica vazio.
    * Tirar alguém daqui revoga o acesso na hora.
    */
   USUARIOS: string;
