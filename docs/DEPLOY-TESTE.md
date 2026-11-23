@@ -1,7 +1,7 @@
 # Deploy de teste e gestão de usuários
 
-App publicado em `https://financeirospl.specialimoveis.workers.dev`
-(Worker `financeirospl`, subdomínio da conta `specialimoveis`).
+App publicado em `https://hud.specialimoveis.workers.dev`
+(Worker `hud`, subdomínio da conta `specialimoveis`).
 Login: **nome + senha gerada** pelo administrador. Sem cartão, sem Zero Trust, sem serviços externos de login.
 Usar apenas documentos **fictícios ou anonimizados**.
 
