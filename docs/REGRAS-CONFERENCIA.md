@@ -1,0 +1,110 @@
+# Regras de conferência — Recibo do Locatário × Extrato de Repasse
+
+Regras definidas com o financeiro e aplicadas pelo código em `src/nido/conferir.ts`, sem IA.
+Cada regra tem teste em `src/nido/conferir.test.ts`. Qualquer mudança aqui precisa mudar o código e o teste.
+
+## Arquivos
+
+- Os dois relatórios devem ser **exportados direto do NIDO**. PDF gerado por “Imprimir → Microsoft Print to PDF”
+  não tem texto e é recusado.
+- Pode enviar vários arquivos de cada lado. O mesmo recibo/extrato repetido (cópia idêntica) conta uma vez só.
+  O mesmo extrato (número e proprietário) em **duas versões diferentes** é divergência: a pessoa usa "Adicionar ou
+  trocar extratos" com a versão certa.
+- **Juntar PDF:** página que junta vários Extratos de Repasse num PDF só e baixa o arquivo. O PDF juntado é lido
+  como qualquer outro, e o app mostra de qual arquivo original veio cada página.
+- Dois modos de conferência:
+  - **Repasses juntados:** todos os recibos × todos os extratos de uma vez (ou o PDF juntado).
+  - **Repasses únicos:** os recibos ficam carregados; envie um ou vários extratos (ex.: um PDF por contrato),
+    confira e envie os próximos. "Recibos sem extrato" não aparece (seria todo o resto). Repasse em dobro só é
+    detectado entre os extratos da mesma conferência, porque nada é guardado entre conferências.
+- Extrato com "PAGAMENTO AGUARDANDO EFETIVAÇÃO" (repasse ainda não pago) é conferido igual ao já pago.
+- Depois de conferir, dá para **adicionar ou trocar extratos** e analisar de novo: um extrato com o mesmo número e
+  proprietário substitui o anterior (versão corrigida).
+- **Dupla checagem da leitura:** ao ler um PDF de extratos, o app conta os extratos direto do texto (linha
+  "Total Pendente Contrato N") e **recusa o arquivo** se a contagem não bater com os extratos lidos. Um extrato
+  que ficasse sem ler sumiria da soma sem ninguém ver.
+- **Lotes anteriores já pagos (opcional):** a pessoa pode enviar os PDFs dos lotes já pagos. Extrato com o mesmo
+  número e proprietário de um lote anterior sai da soma e aparece em vermelho no topo, até a pessoa marcar "Não foi
+  pago: colocar na soma" (caso real: lote que ficou aberto no NIDO e foi baixado de novo).
+
+## Como os documentos são casados
+
+- Recibo e extrato são casados por **número do contrato + vencimento** (o vencimento tem que ser o mesmo; a data de
+  pagamento pode variar).
+- Um contrato com vários proprietários tem um extrato por proprietário; eles são conferidos juntos.
+
+## Situação do contrato (vem do extrato)
+
+| Situação | O que o app faz |
+|---|---|
+| Normal | Conferência automática completa |
+| IPTU PG Inquilino | Conferência automática completa (só retém a taxa ADM) |
+| Aluguel Garantido | Conferência automática; extrato **sem** recibo é normal |
+| Cond. PG Inquilino | Conferência automática **e** separa para conferência manual |
+| Contas PG Special | Repassa aluguel, multa e IRRF descontando a taxa ADM; **retém** condomínio, encargos, taxa de expediente, seguros e IPTU. Também separa para conferência manual |
+| PRE-CADASTRO | Se houver recibo com mesmo proprietário, endereço e contrato: confere que tudo foi repassado **sem** taxa ADM. Sem isso: conferência manual |
+| Jurídico | Só separa para conferência manual |
+| Qualquer outra | Conferência manual |
+
+## Regras de valores (em centavos; qualquer centavo de diferença é divergência)
+
+- Tudo o que o inquilino pagou e pertence ao proprietário tem que aparecer no extrato, com o mesmo valor.
+- **Taxa ADM** = (aluguel − abono + multa e juros) × percentual do extrato, arredondada (juros são cobrados só sobre o aluguel e entram na base). Ausente ou diferente: divergência.
+  Taxa ADM sem linha que comece com "Aluguel" (ex.: "Acordo ref. aos boletos Alugueis"): conferência manual.
+  **Aluguel Gerador** e **manutenção** (ex.: "Manutenção Elevador") **não entram** na base. **Abono de benfeitoria**
+  (ex.: "Abono/ Benfeitoria 4/4") **não diminui** a base: a taxa vai sobre o aluguel cheio.
+- **Taxa Adm no recibo**: só é certa por acordo do contrato (ex.: 7840), que não aparece no PDF; conferência manual.
+- **Taxa de intermediação** (primeiro aluguel): o normal é 100% do aluguel, mas varia conforme o acordo (que não aparece no PDF); se for diferente, conferência manual.
+  Nesse caso a **multa não é repassada**.
+- **Abono e IRRF**: crédito ao inquilino no recibo, débito ao proprietário no extrato.
+- **Multa e juros**: repassados ao proprietário (exceto com taxa de intermediação).
+- **Ficam retidos** (não podem aparecer como crédito ao proprietário): taxa (de) expediente (ex.: "Taxa Expediente"), honorário judicial (fica sempre com a Special), serviço (de) despachante (ex.: "Serviço Despachante Enel/Sabesp"),
+  taxa de assinatura digital, taxa de boleto, matrícula atualizada, boleto de caucionamento e seguros.
+  Seguro repassado vai para conferência manual (há casos em que é repassado).
+- Linha do extrato com **crédito e débito iguais** (ex.: IPTU em Contas PG Special) passa pelo extrato e fica retida:
+  conta como retida e vale uma vez só na soma das partes.
+- **Descontos previstos ao proprietário**: taxa de repasse, taxa de renovação e vistoria.
+  Outros débitos ao proprietário sem origem no recibo aparecem como aviso.
+- Lançamento com **“diferença”** no histórico vai para conferência manual.
+- **Vários proprietários**: com os extratos de todos os donos, as partes devem somar o total, com tolerância de
+  1 centavo por proprietário (arredondamento do NIDO). Se só parte dos donos foi enviada, cada parte é conferida pelo
+  percentual impresso, com tolerância de 0,005% do total + 1 centavo (o NIDO calcula 33,333…% e imprime 33,33%).
+- Duas linhas iguais (mesmo histórico e valor) no mesmo extrato são dois lançamentos, não partes de dois
+  proprietários (ex.: dois "Condomínio" de R$ 500).
+- Créditos − débitos de cada extrato devem ser iguais ao valor pago ao proprietário. Quando não são, além da
+  divergência, o extrato aparece em vermelho no topo do resultado e do relatório (entra na soma com o valor do NIDO).
+- **Grave:** mais de um repasse na mesma competência e no mesmo vencimento para o mesmo contrato e proprietário.
+  Vencimentos diferentes na mesma competência são boletos diferentes (ex.: inquilino que estava devendo, acordo) e não
+  são divergência.
+- Recibo sem extrato, ou extrato sem recibo (fora Aluguel Garantido e Pré-cadastro), aparece em seção própria
+  ("Recibo sem extrato" / "Extrato sem recibo"), separada das divergências: pode ser só arquivo faltando.
+  Mesmo contrato com vencimento diferente continua sendo divergência.
+
+## Totais do relatório
+
+- Soma só os **repasses** (valor pago/a repassar de cada extrato), nunca os valores do recibo.
+- **Depósito caução** nunca entra no total: o valor da linha "Depósito Caução" do extrato é descontado da soma. O
+  extrato que é só caução fica fora da soma, da contagem de extratos e do quadro "sem banco"; o relatório mostra à
+  parte quantos são e quanto somam. A conferência do contrato continua igual.
+- Extrato de **R$ 0,00** (nada a pagar) também fica fora da soma, da contagem e do quadro "sem banco"; a conferência
+  do contrato continua igual.
+- Separada pela conta de onde sai a transferência: repasse para **Bradesco** sai do Bradesco; para **qualquer outro
+  banco** (Itaú, Banco do Brasil, Inter, Santander…) sai do **Itaú**.
+- Extrato **sem banco**: fica em linha à parte, destacada, até a pessoa escolher no relatório "Somar no Itaú" ou
+  "Somar no Bradesco" para cada repasse. A escolha vale só para aquela conferência (nada é guardado).
+- **Troca de conta à mão:** na tabela de pagamentos, qualquer repasse (mesmo com banco no extrato) pode ser mudado
+  com "Pagar pelo Itaú/Bradesco" (ex.: contrato dividido, uma metade em cada banco). A impressão mostra "Conta
+  trocada à mão". Vale só para aquela conferência.
+- **Relatório por conta**: no topo do relatório dá para escolher "Todos", "Só Bradesco" ou "Só Itaú". Com uma conta
+  escolhida, totais, lançamentos manuais, contratos e impressão mostram só os repasses daquela conta. Repasse sem
+  banco e sem conta escolhida, e recibo sem extrato, só aparecem em "Todos". Os botões "Salvar só do Itaú" e
+  "Salvar só do Bradesco" escolhem a conta e já abrem a impressão.
+- **Extrato excluído** pela pessoa no relatório: sai da soma e da análise, e o contrato dele não aparece mais (não
+  vira "recibo sem extrato"). "Colocar de volta" desfaz.
+- **Dados bancários**: cada contrato do relatório mostra, por proprietário, CPF/CNPJ, forma de pagamento, banco,
+  agência, conta, tipo de conta e a descrição do cadastro (costuma indicar o titular da conta), como estão no extrato.
+- **Lançamento manual**: repasse feito por fora do NIDO, sem extrato. A pessoa digita o valor no relatório e escolhe
+  a conta (Itaú ou Bradesco); ele soma no total da conta e no geral, não conta como extrato e não é conferido.
+  Vale só para aquela conferência (nada é guardado).
+- **Pesquisa de contrato** acima das tabelas de pagamento: esconde na tela os contratos que não batem com o número
+  digitado. Não muda totais nem impressão.
