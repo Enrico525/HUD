@@ -2,7 +2,9 @@
 
 Site único que junta a **Conferência Financeira** (antigo repositório FinanceiroSPL) e a **Conferência de Áreas**
 (antigo Confer-ncia-reas), com um menu lateral para navegar entre eles e a identidade visual do LYD CRM.
-Tudo fica atrás do mesmo login.
+O site abre direto, **sem login**.
+
+> **Sem login (11/2026):** a pedido do dono, o site abre direto, sem nome nem senha. Qualquer pessoa com o endereço usa as páginas; os PDFs e endereços continuam lidos só no navegador, sem envio nem armazenamento. O login abaixo vale apenas para a rota `/api/analisar` (IA), que o app não usa.
 
 ## Conferência de Áreas
 
@@ -23,7 +25,7 @@ Ferramenta interna para conferir os **Recibos do Locatário** contra os **Extrat
 e somar o que deve ser repassado por conta (Itaú e Bradesco).
 Os PDFs são lidos e conferidos **no navegador**, com regras fixas e sem IA: nada é enviado nem armazenado.
 
-**Endereço:** <https://hud.specialimoveis.workers.dev> (Worker `hud`; acesso só com nome e senha cadastrados).
+**Endereço:** <https://hud.specialimoveis.workers.dev> (Worker `hud`, aberto, sem login).
 Também pode rodar na Vercel: ver [docs/DEPLOY-VERCEL.md](docs/DEPLOY-VERCEL.md).
 
 > **Status:** em uso com lotes reais. Regras em [docs/REGRAS-CONFERENCIA.md](docs/REGRAS-CONFERENCIA.md);

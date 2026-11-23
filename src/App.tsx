@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { buscarUsuario, ErroApi, sair } from "./api";
 import { lerPdf, ErroLeitura } from "./pdf/extrair";
 import { juntarPdfs } from "./pdf/juntar";
 import { extratosNaoLidos, lerRecibos, lerRepasses, type Recibo, type Repasse } from "./nido/ler";
@@ -7,7 +6,6 @@ import { conferirSem, idRepasse, jaPagosAntes } from "./nido/conferir";
 import { AvisoAtualizacao } from "./components/AvisoAtualizacao";
 import { SeletorPdf, type ArquivoLido } from "./components/SeletorPdf";
 import { Resultado } from "./components/Resultado";
-import { Login } from "./components/Login";
 import { Logo } from "./components/Logo";
 import { ConferenciaAreas } from "./components/ConferenciaAreas";
 
@@ -43,11 +41,6 @@ const LADOS = {
 } as const;
 
 export function App() {
-  const [usuario, setUsuario] = useState<string | null>(null);
-  const [desenvolvimento, setDesenvolvimento] = useState(false);
-  const [avisoSair, setAvisoSair] = useState(false);
-  const [erroSessao, setErroSessao] = useState<string | null>(null);
-  const [naoLogado, setNaoLogado] = useState(false);
   const [arquivos, setArquivos] = useState<Arquivos>(VAZIO);
   // Dados lidos da conferência em tela (só em memória): permitem remover ou adicionar extratos e analisar de novo.
   const [base, setBase] = useState<{ recibos: Recibo[]; repasses: Repasse[]; anteriores: Repasse[] } | null>(null);
@@ -62,18 +55,6 @@ export function App() {
   const [pagina, setPagina] = useState<Pagina>("geral");
   const modo: Modo = pagina === "um" ? "um" : "geral";
   const proximoId = useRef(0);
-
-  useEffect(() => {
-    buscarUsuario()
-      .then((u) => {
-        setUsuario(u.usuario);
-        setDesenvolvimento(u.desenvolvimento);
-      })
-      .catch((e: Error) => {
-        if (e instanceof ErroApi && e.codigo === "nao_autenticado") setNaoLogado(true);
-        else setErroSessao(e.message);
-      });
-  }, []);
 
   const limparTudo = () => {
     setArquivos(VAZIO);
@@ -180,51 +161,13 @@ export function App() {
     setPagina(novo);
   };
 
-  const encerrar = async () => {
-    if (desenvolvimento && usuario?.includes("@")) return setAvisoSair(true); // login simulado
-    if (casos && !confirm("Sair agora apaga o resultado da conferência. Continuar?")) return;
-    limparTudo();
-    await sair().catch(() => undefined); // mesmo se falhar, a tela volta ao login; o cookie expira sozinho
-    setUsuario(null);
-    setNaoLogado(true);
-  };
-
-  if (naoLogado)
-    return (
-      <Login
-        aoEntrar={(u) => {
-          setUsuario(u);
-          setNaoLogado(false);
-          buscarUsuario().then((d) => setDesenvolvimento(d.desenvolvimento), () => undefined);
-        }}
-      />
-    );
-  // Não mostra a área interna antes de confirmar o login.
-  if (!usuario && !erroSessao) return <p className="carregando" role="status">Carregando…</p>;
-
   return (
     <>
       <header className="topo">
         <Logo />
         <span className="topo__titulo">HUD</span>
-        <div className="topo__usuario">
-          {desenvolvimento && <span className="selo">Desenvolvimento</span>}
-          {usuario && <span>{usuario}</span>}
-          <button type="button" className="botao botao--texto" onClick={encerrar}>
-            Sair
-          </button>
-        </div>
       </header>
       <AvisoAtualizacao />
-      {avisoSair && (
-        <p className="alerta aviso-topo" role="status">
-          O login simulado de desenvolvimento (DEV_EMAIL) está ativo, então não há sessão para encerrar. Para testar o
-          login real localmente, deixe DEV_EMAIL vazio no .dev.vars.{" "}
-          <button type="button" className="botao botao--texto" onClick={() => setAvisoSair(false)}>
-            Fechar
-          </button>
-        </p>
-      )}
 
       <div className="layout">
         <nav className="lateral" aria-label="Páginas">
@@ -247,123 +190,115 @@ export function App() {
           ))}
         </nav>
         <main className="conteudo">
-          {erroSessao ? (
-            <p className="erro" role="alert">
-              {erroSessao}
-            </p>
+          {pagina === "areas" ? (
+            <ConferenciaAreas />
+          ) : pagina === "juntar" ? (
+            <>
+              <h1>Juntar PDF</h1>
+              <p className="subtitulo">
+                Junte vários Extratos de Repasse em um PDF só e salve no seu computador. Depois, use esse PDF em
+                “Repasses juntados”. Nada é enviado nem salvo pelo app.
+              </p>
+              <div className="seletores">
+                <SeletorPdf
+                  rotulo={LADOS.repasses.rotulo}
+                  plural={LADOS.repasses.plural}
+                  arquivos={arquivos.repasses}
+                  aoSelecionar={(f) => adicionar("repasses", f)}
+                  aoRemover={(id) => remover("repasses", id)}
+                />
+              </div>
+              <div className="acoes">
+                <button
+                  type="button"
+                  className="botao"
+                  disabled={arquivos.repasses.length < 2 || arquivos.repasses.some((a) => a.estado !== "ok")}
+                  onClick={juntarRepasses}
+                >
+                  Juntar e salvar PDF
+                </button>
+              </div>
+            </>
           ) : (
             <>
-              {pagina === "areas" ? (
-                <ConferenciaAreas />
-              ) : pagina === "juntar" ? (
-                <>
-                  <h1>Juntar PDF</h1>
-                  <p className="subtitulo">
-                    Junte vários Extratos de Repasse em um PDF só e salve no seu computador. Depois, use esse PDF em
-                    “Repasses juntados”. Nada é enviado nem salvo pelo app.
-                  </p>
-                  <div className="seletores">
+              <h1>{modo === "um" ? "Repasses únicos" : "Repasses juntados"}</h1>
+              <p className="subtitulo">
+                Recibos do Locatário × Extratos de Repasse exportados do NIDO. Os PDFs são lidos e conferidos no seu
+                computador: nada é enviado nem salvo.
+              </p>
+
+              {modo === "um" && (
+                <p className="alerta">
+                  Neste modo, repasse em dobro só é detectado entre os extratos da mesma conferência: o app não
+                  guarda as conferências anteriores.
+                </p>
+              )}
+
+              {!casos && (
+                <div className="seletores">
+                  {(["recibos", "repasses", "anteriores"] as const).map((lado) => (
                     <SeletorPdf
-                      rotulo={LADOS.repasses.rotulo}
-                      plural={LADOS.repasses.plural}
-                      arquivos={arquivos.repasses}
-                      aoSelecionar={(f) => adicionar("repasses", f)}
-                      aoRemover={(id) => remover("repasses", id)}
+                      key={lado}
+                      rotulo={LADOS[lado].rotulo}
+                      plural={LADOS[lado].plural}
+                      arquivos={arquivos[lado]}
+                      aoSelecionar={(f) => adicionar(lado, f)}
+                      aoRemover={(id) => remover(lado, id)}
                     />
-                  </div>
-                  <div className="acoes">
-                    <button
-                      type="button"
-                      className="botao"
-                      disabled={arquivos.repasses.length < 2 || arquivos.repasses.some((a) => a.estado !== "ok")}
-                      onClick={juntarRepasses}
-                    >
-                      Juntar e salvar PDF
+                  ))}
+                </div>
+              )}
+
+              <div className="acoes">
+                {!casos ? (
+                  <button type="button" className="botao" disabled={!prontos} onClick={iniciar}>
+                    Conferir
+                  </button>
+                ) : modo === "um" ? (
+                  <>
+                    <button type="button" className="botao" onClick={() => setBase(null)}>
+                      Conferir outros extratos
                     </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <h1>{modo === "um" ? "Repasses únicos" : "Repasses juntados"}</h1>
-                  <p className="subtitulo">
-                    Recibos do Locatário × Extratos de Repasse exportados do NIDO. Os PDFs são lidos e conferidos no seu
-                    computador: nada é enviado nem salvo.
+                    <button type="button" className="botao botao--secundario" onClick={pedirLimpeza}>
+                      Trocar os recibos
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" className="botao botao--secundario" onClick={pedirLimpeza}>
+                    Nova conferência
+                  </button>
+                )}
+              </div>
+
+              {casos && (
+                <section className="adicionar nao-imprimir" aria-label="Adicionar extratos">
+                  <SeletorPdf
+                    rotulo="Adicionar ou trocar extratos"
+                    plural={LADOS.repasses.plural}
+                    arquivos={arquivos.repasses}
+                    aoSelecionar={(f) => adicionar("repasses", f)}
+                    aoRemover={(id) => remover("repasses", id)}
+                  />
+                  <p className="caso__meta">
+                    Os extratos já analisados continuam. Um extrato com o mesmo número e proprietário substitui o
+                    anterior (use para colocar a versão corrigida).
                   </p>
+                  <button type="button" className="botao" disabled={!extrasProntos} onClick={analisarDeNovo}>
+                    Analisar de novo
+                  </button>
+                </section>
+              )}
 
-                  {modo === "um" && (
-                    <p className="alerta">
-                      Neste modo, repasse em dobro só é detectado entre os extratos da mesma conferência: o app não
-                      guarda as conferências anteriores.
-                    </p>
-                  )}
-
-                  {!casos && (
-                    <div className="seletores">
-                      {(["recibos", "repasses", "anteriores"] as const).map((lado) => (
-                        <SeletorPdf
-                          key={lado}
-                          rotulo={LADOS[lado].rotulo}
-                          plural={LADOS[lado].plural}
-                          arquivos={arquivos[lado]}
-                          aoSelecionar={(f) => adicionar(lado, f)}
-                          aoRemover={(id) => remover(lado, id)}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="acoes">
-                    {!casos ? (
-                      <button type="button" className="botao" disabled={!prontos} onClick={iniciar}>
-                        Conferir
-                      </button>
-                    ) : modo === "um" ? (
-                      <>
-                        <button type="button" className="botao" onClick={() => setBase(null)}>
-                          Conferir outros extratos
-                        </button>
-                        <button type="button" className="botao botao--secundario" onClick={pedirLimpeza}>
-                          Trocar os recibos
-                        </button>
-                      </>
-                    ) : (
-                      <button type="button" className="botao botao--secundario" onClick={pedirLimpeza}>
-                        Nova conferência
-                      </button>
-                    )}
-                  </div>
-
-                  {casos && (
-                    <section className="adicionar nao-imprimir" aria-label="Adicionar extratos">
-                      <SeletorPdf
-                        rotulo="Adicionar ou trocar extratos"
-                        plural={LADOS.repasses.plural}
-                        arquivos={arquivos.repasses}
-                        aoSelecionar={(f) => adicionar("repasses", f)}
-                        aoRemover={(id) => remover("repasses", id)}
-                      />
-                      <p className="caso__meta">
-                        Os extratos já analisados continuam. Um extrato com o mesmo número e proprietário substitui o
-                        anterior (use para colocar a versão corrigida).
-                      </p>
-                      <button type="button" className="botao" disabled={!extrasProntos} onClick={analisarDeNovo}>
-                        Analisar de novo
-                      </button>
-                    </section>
-                  )}
-
-                  {casos && (
-                    <Resultado
-                      casos={casos}
-                      modo={modo}
-                      removidos={removidos.size}
-                      jaPagos={jaPagos.map((j) => ({ ...j, liberado: liberados.has(j.id) }))}
-                      aoLiberar={(id, sim) => setLiberados((s) => { const n = new Set(s); if (sim) n.add(id); else n.delete(id); return n; })}
-                      aoRemoverRepasse={(id) => setRemovidos((s) => new Set(s).add(id))}
-                      aoRestaurar={() => setRemovidos(new Set())}
-                    />
-                  )}
-                </>
+              {casos && (
+                <Resultado
+                  casos={casos}
+                  modo={modo}
+                  removidos={removidos.size}
+                  jaPagos={jaPagos.map((j) => ({ ...j, liberado: liberados.has(j.id) }))}
+                  aoLiberar={(id, sim) => setLiberados((s) => { const n = new Set(s); if (sim) n.add(id); else n.delete(id); return n; })}
+                  aoRemoverRepasse={(id) => setRemovidos((s) => new Set(s).add(id))}
+                  aoRestaurar={() => setRemovidos(new Set())}
+                />
               )}
             </>
           )}

@@ -3,8 +3,7 @@
 **HUD** (11/2026): este repositório junta dois sites num só, com menu lateral e identidade visual LYD CRM
 (`src/styles.css`, `src/components/Logo.tsx`): a Conferência Financeira (abaixo, vinda do FinanceiroSPL) e a
 Conferência de Áreas (`src/components/ConferenciaAreas.tsx`, `src/areas/`, dados em `public/areas/terrenos.json`,
-scripts de atualização em `areas/`). A de Áreas usa só dado público da Prefeitura, fica atrás do mesmo login e
-não guarda nada (o aviso de novidade com localStorage do site antigo saiu; vale o `AvisoAtualizacao`).
+scripts de atualização em `areas/`). A de Áreas usa só dado público da Prefeitura, não guarda nada (o aviso de novidade com localStorage do site antigo saiu; vale o `AvisoAtualizacao`).
 
 Plataforma **interna** da Special Imóveis para conferir **Recibos do Locatário × Extratos de Repasse** exportados do
 sistema NIDO. A conferência roda **no navegador, com regras fixas e sem IA** (`src/nido/`); regras de negócio em
@@ -23,6 +22,10 @@ sistema NIDO. A conferência roda **no navegador, com regras fixas e sem IA** (`
 - Não inventar regras de negócio: perguntar.
 
 ## Decisões tomadas
+
+- **Sem login no app (11/2026, pedido do dono):** o frontend não pede nome/senha nem chama `/api/eu`; a tela de
+  login (`Login.tsx`) foi removida. O Worker continua exigindo sessão em `/api/*`, o que hoje só protege a rota
+  `/api/analisar` (OpenAI, sem uso). Não reabrir essa rota sem login: viraria proxy aberto para a chave da OpenAI.
 
 - Stack: React + Vite + TypeScript, Cloudflare Worker com Static Assets (uma app, mesmo domínio).
 - Autenticação: **nome + senha gerada** pelo administrador, feita pelo próprio Worker (`worker/login.ts`). Sem Google, Auth0 ou Cloudflare Access (o usuário não pode usar Zero Trust). Senhas são aleatórias (16 caracteres, ~79 bits, `shared/credenciais.ts`), por isso SHA-256 simples basta — **nunca permitir senha escolhida por pessoa sem trocar para hash lento**. Lista `nome → hash` no Secret `USUARIOS`, gerida por `npm run usuarios` (`scripts/usuarios.ts`; arquivo local `usuarios.local.json` fora do Git). Sessão = JWT HS256 em cookie `__Host-sessao` (HttpOnly, Secure, SameSite=Strict, 8 h), assinado com `SESSION_SECRET`.

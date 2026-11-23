@@ -11,12 +11,8 @@ O mesmo app roda na Vercel sem mudar o código do Worker:
 ## Passos
 
 1. Importe o repositório `Enrico525/HUD` em vercel.com → Add New → Project (o `vercel.json` já configura o build).
-2. Em Settings → Environment Variables (Production), cadastre:
-   - `SESSION_SECRET`: texto aleatório com 32+ caracteres (use um diferente do da Cloudflare).
-   - `USUARIOS`: o JSON de `usuarios.local.json` (nomes e hashes, gerado por `npm run usuarios -- adicionar`).
-     Copie o conteúdo do arquivo para a variável; `npm run usuarios -- publicar` só envia para a Cloudflare.
-   - `AMBIENTE`: `producao` (é o padrão se ficar vazio).
+2. Não precisa de variáveis: o site abre sem login. (`SESSION_SECRET` e `USUARIOS` só seriam usados pela rota
+   `/api/analisar`, que o app não usa.)
 3. Faça o deploy (o próprio push no `main` publica, ou `npx vercel --prod`).
-4. Confira em janela anônima: `/` mostra o login e `/api/eu` responde `{"erro":"nao_autenticado"}`.
+4. Confira em janela anônima: `/` abre o HUD direto e `/api/eu` responde `{"erro":"nao_autenticado"}`.
 
-Trocar usuários na Vercel exige editar a variável `USUARIOS` e fazer um redeploy.
