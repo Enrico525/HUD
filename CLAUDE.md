@@ -4,6 +4,8 @@
 (`src/styles.css`, `src/components/Logo.tsx`): a Conferência Financeira (abaixo, vinda do FinanceiroSPL) e a
 Conferência de Áreas (`src/components/ConferenciaAreas.tsx`, `src/areas/`, dados em `public/areas/terrenos.json`,
 scripts de atualização em `areas/`). A de Áreas usa só dado público da Prefeitura, não guarda nada (o aviso de novidade com localStorage do site antigo saiu; vale o `AvisoAtualizacao`).
+Do repo `Confer-ncia-reas` (25/11/2026) veio só o selo "Base de dados: Cadastro do IPTU <ano>" no topo; a escolha de
+tema claro/escuro (localStorage) e o `robo-iptu.ps1` não foram trazidos.
 
 Plataforma **interna** da Special Imóveis para conferir **Recibos do Locatário × Extratos de Repasse** exportados do
 sistema NIDO. A conferência roda **no navegador, com regras fixas e sem IA** (`src/nido/`); regras de negócio em

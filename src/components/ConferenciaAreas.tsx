@@ -116,6 +116,10 @@ export function ConferenciaAreas() {
       <h1>Conferência de Áreas — São Paulo</h1>
       <p className="subtitulo">
         Encontre área do terreno, SQL, zoneamento e IPTU estimado a partir de uma lista de endereços.
+        <br />
+        <span className="selo selo--manual" title="Quando a Prefeitura publica o IPTU do ano seguinte, o site é atualizado e mostra o aviso de versão nova.">
+          Base de dados: Cadastro do IPTU {ano}
+        </span>
       </p>
 
       <section className="areas__cartao nao-imprimir">
