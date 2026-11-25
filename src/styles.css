@@ -240,6 +240,12 @@ input:focus-visible + .botao, label.botao:focus-within { outline: 3px solid var(
 .selo--ok { color: var(--vinho); border-color: var(--vinho); }
 
 /* Conferência de Áreas */
+.areas__topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.areas__base {
+  flex: none; display: flex; flex-direction: column; padding: 0.6rem 0.9rem; border: 1px solid var(--vinho);
+  border-radius: var(--raio); background: var(--creme); box-shadow: var(--brilho); font-size: 0.8rem; color: var(--metalico);
+}
+.areas__base b { font-size: 0.95rem; color: var(--texto); }
 .areas__cartao { background: rgb(255 255 255 / 0.03); border: 1px solid var(--linha); border-radius: 16px; padding: 1.25rem; margin-bottom: 1.25rem; }
 .areas__arquivo { min-height: 0; cursor: pointer; margin-bottom: 0.5rem; }
 .areas__arquivo:focus-within { border-color: var(--vinho); outline: 3px solid var(--vinho); outline-offset: 2px; }
