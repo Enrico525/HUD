@@ -14,7 +14,7 @@ import { ConferenciaAreas } from "./components/ConferenciaAreas";
 type Lado = "recibos" | "repasses" | "anteriores";
 /** geral: todos os extratos de uma vez. um: um extrato por vez, mantendo os recibos carregados. */
 export type Modo = "geral" | "um";
-type Pagina = Modo | "juntar" | "areas";
+type Pagina = Modo | "juntar" | "represados" | "areas";
 // Menu lateral do HUD: um grupo por site original.
 const GRUPOS: { nome: string; paginas: { id: Pagina; nome: string; descricao: string }[] }[] = [
   {
@@ -23,6 +23,7 @@ const GRUPOS: { nome: string; paginas: { id: Pagina; nome: string; descricao: st
       { id: "juntar", nome: "Juntar PDF", descricao: "Vários extratos de repasse em um PDF só" },
       { id: "um", nome: "Repasses únicos", descricao: "Recibos ficam carregados; confira um ou vários extratos por vez" },
       { id: "geral", nome: "Repasses juntados", descricao: "Todos os recibos × todos os extratos (ou o PDF juntado)" },
+      { id: "represados", nome: "Represados", descricao: "Repasses segurados a pedido do proprietário (em breve)" },
     ],
   },
   {
@@ -215,6 +216,16 @@ export function App() {
         <main className="conteudo">
           {pagina === "areas" ? (
             <ConferenciaAreas />
+          ) : pagina === "represados" ? (
+            // shortcut: só o esqueleto; anexar e conferir os PDFs dos represados fica para quando o negócio definir.
+            <>
+              <h1>Represados</h1>
+              <p className="subtitulo">
+                Repasses que os proprietários pedem para segurar. Hoje eles já saem sozinhos da soma em “Repasses únicos”
+                e “Repasses juntados” e aparecem no relatório em “Represados desta leva (fora da soma)”.
+              </p>
+              <p className="caso__meta">Em breve: anexar aqui os PDFs dos represados para conferir um proprietário por vez.</p>
+            </>
           ) : pagina === "juntar" ? (
             <>
               <h1>Juntar PDF</h1>

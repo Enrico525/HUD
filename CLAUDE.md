@@ -103,7 +103,8 @@ sistema NIDO. A conferência roda **no navegador, com regras fixas e sem IA** (`
   lista; `separarRepresados` tira os extratos deles e os recibos só deles (contrato dividido com quem não é represado
   fica nos dois). Comparação por `nomeSimples` (sem acento, maiúscula, espaço e pontuação). Secret ausente/inválido =
   a conferência não começa. Os separados só aparecem no relatório em "Represados desta leva (fora da soma)", na tela,
-  e somem com a conferência: sem página "Represados", sem guardar de um dia para outro.
+  e somem com a conferência, sem guardar de um dia para outro. A página "Represados" da lateral é só esqueleto (texto
+  "em breve"): anexar os PDFs dos represados e conferir um proprietário por vez fica para quando o negócio pedir.
 - Testes usam só dados fictícios. **Nunca** versionar PDFs ou textos reais (têm CPF, nomes, contas).
 
 ## Pendências (aguardando o negócio)
