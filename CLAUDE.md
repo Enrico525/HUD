@@ -92,10 +92,13 @@ sistema NIDO. A conferência roda **no navegador, com regras fixas e sem IA** (`
 - Aviso de versão nova (11/2026): a cada 30 s e ao voltar para a aba, o app compara o `/assets/index-*.js` do
   index.html do servidor com o carregado (`AvisoAtualizacao.tsx`) e mostra "Atualizar agora". Atualizar limpa a tela.
 - Represados sem banco (26/11/2026): do FinanceiroSPL veio só a separação, sem Supabase. Os nomes (11) ficam no Secret
-  `REPRESADOS` (JSON com os nomes como no extrato; nunca no código nem aqui). O nome tem de ser o inteiro do extrato:
+  `REPRESADOS` (JSON com os nomes como no extrato; nunca no código). O nome tem de ser o inteiro do extrato:
   empresa com a razão social completa ("… Empreendimentos Imobiliarios LTDA"; nome curto não bate) e, em contrato
   partilhado, cada proprietário separado. Gravado em 26/11/2026 com os 11 (as 2 empresas corrigidas para o nome
-  completo). Regravar: `npx wrangler secret put REPRESADOS --name hud` e colar `["Nome 1","Nome 2"]` (vale na hora). Ao "Conferir" e "Analisar de novo", o app
+  completo). Lista gravada (26/11/2026): Cintia Helena Manzoli Biazzi e Monica Regina Manzoli Lowy (partilhadas),
+  Space Flex Empreendimentos Imobiliarios LTDA, Iones Empreendimentos Imobiliarios LTDA, Francisca dos Anjos Custoias e
+  Faustino de Deus Custoias (partilhados), José Augusto Amaral, Natalia de Souza Amaral, Rosemeire Aparecida Teixeira,
+  Carlos Alberto Teixeira, Gilberto José Teixeira. Mudou a lista aqui = regravar o Secret (é ele que vale). Regravar: `npx wrangler secret put REPRESADOS --name hud` e colar `["Nome 1","Nome 2"]` (vale na hora). Ao "Conferir" e "Analisar de novo", o app
   manda os proprietários do lote para `POST /api/represados` (sem login, rate limit por IP) e recebe só os que estão na
   lista; `separarRepresados` tira os extratos deles e os recibos só deles (contrato dividido com quem não é represado
   fica nos dois). Comparação por `nomeSimples` (sem acento, maiúscula, espaço e pontuação). Secret ausente/inválido =
