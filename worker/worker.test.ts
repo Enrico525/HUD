@@ -173,3 +173,37 @@ describe("resposta da OpenAI", () => {
     expect(SCHEMA_RESULTADO).not.toHaveProperty("$schema");
   });
 });
+
+describe("represados", () => {
+  const pedir = (corpo: unknown, headers: Record<string, string> = {}) =>
+    new Request(`${URL_APP}/api/represados`, {
+      method: "POST",
+      headers: { Origin: URL_APP, "X-Requested-With": "plataforma-financeira", "Content-Type": "application/json", ...headers },
+      body: JSON.stringify(corpo),
+    });
+  const LISTA = JSON.stringify(["José da Silva", "EMPRESA X LTDA."]);
+
+  it("devolve só os nomes enviados que estão na lista (sem acento, maiúscula, espaço ou pontuação), sem login", async () => {
+    const r = await worker.fetch(
+      pedir({ nomes: ["JOSE DA SILVA", "Maria Souza", "Empresa X Ltda", "JOSE DA SILVA"] }),
+      await ambiente({ REPRESADOS: LISTA }),
+    );
+    expect(r.status).toBe(200);
+    expect(await r.json()).toEqual({ represados: ["JOSE DA SILVA", "Empresa X Ltda"] });
+  });
+
+  it("sem a lista configurada é erro, não lista vazia", async () => {
+    for (const REPRESADOS of [undefined, "", "[]", "{}", "[1]"]) {
+      const r = await worker.fetch(pedir({ nomes: ["x"] }), await ambiente({ REPRESADOS }));
+      expect(r.status).toBe(503);
+      expect(await r.json()).toEqual({ erro: "falha_represados" });
+    }
+  });
+
+  it("recusa pedido de outra origem ou fora do formato", async () => {
+    const env = await ambiente({ REPRESADOS: LISTA });
+    expect((await worker.fetch(pedir({ nomes: ["x"] }, { Origin: "https://outro.exemplo" }), env)).status).toBe(400);
+    expect((await worker.fetch(pedir({ nomes: "x" }), env)).status).toBe(400);
+    expect((await worker.fetch(pedir({ nomes: ["x"], extra: 1 }), env)).status).toBe(400);
+  });
+});

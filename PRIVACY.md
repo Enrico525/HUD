@@ -17,6 +17,7 @@ banco, agência e conta). Nome do usuário para login.
 | Local | O que existe | Retenção |
 |---|---|---|
 | Navegador do usuário | PDFs, texto, registros lidos, resultado, relatório e lançamentos manuais digitados (só em memória) | Até nova conferência, sair, recarregar ou fechar a página (melhor esforço) |
+| Worker (Cloudflare) | Secret `REPRESADOS`: nomes dos proprietários que pedem para segurar o repasse. A cada conferência recebe os nomes dos proprietários do lote e devolve só os que estão na lista; nada é guardado nem registrado | Até o administrador trocar o Secret |
 | Computador do usuário | PDF baixado pelo "Juntar PDF" e relatório impresso/salvo em PDF (contém CPF/CNPJ e dados bancários) | Fora do controle do app: cabe ao usuário guardar e descartar ⚖️ |
 | Cloudflare Worker | Nenhum dado dos documentos (a conferência roda no navegador) | — |
 | Cookie de sessão (navegador) | Nome do usuário, assinado | Até 8 h ou até sair |

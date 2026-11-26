@@ -76,6 +76,7 @@ export type CodigoErro =
   | "timeout"
   | "falha_ia"
   | "resposta_invalida"
+  | "falha_represados"
   | "interno";
 
 export type RespostaErro = { erro: CodigoErro };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { conferir, conferirSem, idRepasse, jaPagosAntes, taxaAdmEsperada, totais } from "./conferir";
+import { conferir, conferirSem, idRepasse, jaPagosAntes, separarRepresados, taxaAdmEsperada, totais } from "./conferir";
 import type { LinhaRepasse, Recibo, Repasse } from "./ler";
 
 const V = "05/11/2026";
@@ -502,5 +502,27 @@ describe("jaPagosAntes", () => {
   it("leva a soma das linhas de cada extrato para o relatório", () => {
     const [c] = conferir([], [{ ...repasse([["Aluguel", 1000, true]]), pago: 999 }]);
     expect(c.repasses[0]).toMatchObject({ valor: 999, liquido: 1000 });
+  });
+});
+
+describe("separarRepresados", () => {
+  const rA = repasse([["Aluguel", 100000, true]], { contrato: "1", proprietario: "JOSÉ DA SILVA", numero: "10" });
+  const rB = repasse([["Aluguel", 50000, true]], { contrato: "2", proprietario: "MARIA SOUZA", numero: "20" });
+  // Contrato 3 dividido: uma parte é de represado, a outra não.
+  const rC1 = repasse([["Aluguel", 30000, true]], { contrato: "3", proprietario: "JOSE DA SILVA", numero: "31" });
+  const rC2 = repasse([["Aluguel", 30000, true]], { contrato: "3", proprietario: "MARIA SOUZA", numero: "32" });
+  const rec = (contrato: string) => recibo([["Aluguel", 100000, 0]], { contrato });
+  const recibos = [rec("1"), rec("2"), rec("3"), rec("4")];
+
+  it("tira os extratos dos nomes da lista e os recibos só deles", () => {
+    const s = separarRepresados(recibos, [rA, rB, rC1, rC2], new Set(["josedasilva"]));
+    expect(s.repasses).toEqual([rB, rC2]);
+    expect(s.recibos.map((r) => r.contrato)).toEqual(["2", "3", "4"]);
+    expect(s.separados).toEqual([rA, rC1]);
+  });
+
+  it("sem nomes na lista, nada muda", () => {
+    const s = separarRepresados(recibos, [rA, rB], new Set());
+    expect(s).toEqual({ recibos, repasses: [rA, rB], separados: [] });
   });
 });

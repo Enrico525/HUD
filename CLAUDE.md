@@ -91,6 +91,13 @@ sistema NIDO. A conferência roda **no navegador, com regras fixas e sem IA** (`
   boletos diferentes (inquilino que estava devendo, acordo: 14990).
 - Aviso de versão nova (11/2026): a cada 30 s e ao voltar para a aba, o app compara o `/assets/index-*.js` do
   index.html do servidor com o carregado (`AvisoAtualizacao.tsx`) e mostra "Atualizar agora". Atualizar limpa a tela.
+- Represados sem banco (26/11/2026): do FinanceiroSPL veio só a separação, sem Supabase. Os nomes (11) ficam no Secret
+  `REPRESADOS` (JSON com os nomes como no extrato; nunca no código nem aqui). Ao "Conferir" e "Analisar de novo", o app
+  manda os proprietários do lote para `POST /api/represados` (sem login, rate limit por IP) e recebe só os que estão na
+  lista; `separarRepresados` tira os extratos deles e os recibos só deles (contrato dividido com quem não é represado
+  fica nos dois). Comparação por `nomeSimples` (sem acento, maiúscula, espaço e pontuação). Secret ausente/inválido =
+  a conferência não começa. Os separados só aparecem no relatório em "Represados desta leva (fora da soma)", na tela,
+  e somem com a conferência: sem página "Represados", sem guardar de um dia para outro.
 - Testes usam só dados fictícios. **Nunca** versionar PDFs ou textos reais (têm CPF, nomes, contas).
 
 ## Pendências (aguardando o negócio)

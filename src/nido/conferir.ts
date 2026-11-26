@@ -1,5 +1,6 @@
 // Regras de conferência Recibo do Locatário × Extrato de Repasse, definidas com o financeiro.
 // Tudo em centavos inteiros. Nenhuma regra aqui depende de IA.
+import { nomeSimples } from "../../shared/credenciais";
 import type { LinhaRepasse, Pagamento, Recibo, Repasse } from "./ler";
 
 export type Apontamento = { tipo: "divergencia" | "manual" | "aviso"; texto: string };
@@ -26,12 +27,7 @@ export type Caso = {
 
 export const reais = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-const simples = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "");
+const simples = nomeSimples;
 
 const ehPagamentoAdm = (h: string) => /^taxa adm\.?\/aluguel/i.test(h);
 const ehIntermediacao = (h: string) => /^taxa (de )?intermedia/i.test(h);
@@ -319,6 +315,22 @@ export function jaPagosAntes(repasses: Repasse[], anteriores: Repasse[]): JaPago
 /** "arquivo.pdf, pág. 3", e no PDF juntado também o arquivo original. */
 const local = (r: Recibo | Repasse) =>
   `${r.arquivo}, pág. ${r.pagina}${r.origem ? ` (no juntado, veio de ${r.origem})` : ""}`;
+
+/**
+ * Represados (proprietários que pedem para segurar o repasse): os extratos deles saem da conferência do dia, e os
+ * recibos também, menos o de contrato dividido com quem não é represado (fica nos dois lados).
+ * `nomes`: os da lista, já em `nomeSimples`.
+ */
+export function separarRepresados(recibos: Recibo[], repasses: Repasse[], nomes: Set<string>) {
+  const ehRepresado = (r: Repasse) => nomes.has(nomeSimples(r.proprietario));
+  const deRepresado = new Set(repasses.filter(ehRepresado).map((r) => r.contrato));
+  const doDia = new Set(repasses.filter((r) => !ehRepresado(r)).map((r) => r.contrato));
+  return {
+    recibos: recibos.filter((r) => !deRepresado.has(r.contrato) || doDia.has(r.contrato)),
+    repasses: repasses.filter((r) => !ehRepresado(r)),
+    separados: repasses.filter(ehRepresado),
+  };
+}
 
 /**
  * Conferência sem os extratos que a pessoa excluiu. O contrato que ficou só com o recibo sai junto:

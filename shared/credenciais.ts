@@ -17,6 +17,14 @@ export const normalizarNome = (nome: string) =>
     .replace(/\s+/g, " ")
     .toLowerCase();
 
+/** Nome só com letras e números, sem acento nem maiúscula: compara proprietários e a lista de represados. */
+export const nomeSimples = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
 /** Aceita a senha com ou sem hífens/espaços e em minúsculas. */
 export const normalizarSenha = (senha: string) => senha.toUpperCase().replace(/[^A-Z0-9]/g, "");
 

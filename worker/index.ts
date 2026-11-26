@@ -4,10 +4,12 @@ import { autenticar } from "./auth";
 import { entrar } from "./login";
 import { analisarComOpenAI, ErroAnalise } from "./openai";
 import { erro, json, requisicaoDoApp } from "./resposta";
+import { ErroRepresados, PedidoRepresados, represadosDoLote } from "./represados";
 import { apagarSessao } from "./sessao";
 
 // Margem sobre LIMITES.caracteresTotais para acentos (UTF-8) e escapes do JSON.
 const MAX_BYTES_CORPO = 4 * 1024 * 1024;
+const MAX_BYTES_REPRESADOS = 1024 * 1024;
 
 export default {
   async fetch(request: Request, env: Ambiente): Promise<Response> {
@@ -21,6 +23,25 @@ export default {
         if (url.pathname === "/auth/entrar") return await entrar(request, env);
         if (url.pathname === "/auth/sair") return json({ ok: true }, 200, { "Set-Cookie": apagarSessao() });
         return json({ erro: "requisicao_invalida" }, 404);
+      }
+
+      // Sem login (o app não tem): só responde quais dos nomes enviados são represados, nunca a lista inteira.
+      if (url.pathname === "/api/represados" && request.method === "POST") {
+        if (!requisicaoDoApp(request, url)) return erro("requisicao_invalida");
+        const ip = request.headers.get("CF-Connecting-IP") ?? "local";
+        if (!(await env.LIMITADOR.limit({ key: `represados:${ip}` })).success) return erro("limite_requisicoes");
+        if (Number(request.headers.get("Content-Length") ?? 0) > MAX_BYTES_REPRESADOS) return erro("requisicao_invalida");
+        const bruto = await request.text();
+        if (bruto.length > MAX_BYTES_REPRESADOS) return erro("requisicao_invalida");
+        let corpo: unknown;
+        try {
+          corpo = JSON.parse(bruto);
+        } catch {
+          return erro("requisicao_invalida");
+        }
+        const pedido = PedidoRepresados.safeParse(corpo);
+        if (!pedido.success) return erro("requisicao_invalida");
+        return json({ represados: represadosDoLote(pedido.data.nomes, env) });
       }
 
       const usuario = await autenticar(request, env);
@@ -57,7 +78,7 @@ export default {
 
       return json({ erro: "requisicao_invalida" }, 404);
     } catch (e) {
-      const codigo = e instanceof ErroAnalise ? e.codigo : "interno";
+      const codigo = e instanceof ErroAnalise ? e.codigo : e instanceof ErroRepresados ? "falha_represados" : "interno";
       // Somente a categoria. Nunca registrar corpo, texto, senha, resposta da IA ou mensagens de exceção.
       console.error(JSON.stringify({ evento: "erro_api", rota: url.pathname, codigo }));
       return erro(codigo);

@@ -9,6 +9,7 @@ const MENSAGENS: Record<CodigoErro, string> = {
   timeout: "A análise demorou demais e foi interrompida. Tente novamente.",
   falha_ia: "O serviço de análise está indisponível no momento. Tente novamente mais tarde.",
   resposta_invalida: "A análise retornou um resultado inválido. Repita o procedimento.",
+  falha_represados: "A lista de represados não está configurada no servidor.",
   interno: "Ocorreu um erro inesperado. Tente novamente.",
 };
 
@@ -43,3 +44,7 @@ export const entrar = (nome: string, senha: string) =>
 
 export const sair = () => chamar<{ ok: true }>("/auth/sair", { method: "POST", headers: DO_APP, body: "{}" });
 
+
+/** Quais destes proprietários são represados (a lista fica só no Worker). */
+export const buscarRepresados = (nomes: string[]) =>
+  chamar<{ represados: string[] }>("/api/represados", { method: "POST", headers: DO_APP, body: JSON.stringify({ nomes }) });

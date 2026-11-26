@@ -12,5 +12,7 @@ export interface Ambiente {
   /** Secret */
   OPENAI_API_KEY: string;
   DEV_EMAIL?: string;
+  /** Secret: JSON com os nomes dos proprietários represados (como vêm no extrato). Nunca no repositório. */
+  REPRESADOS?: string;
   LIMITADOR: RateLimit;
 }

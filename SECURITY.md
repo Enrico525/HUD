@@ -12,7 +12,8 @@
 | CSRF | Exige `Origin` igual, `X-Requested-With` e `Content-Type: application/json` | `worker/index.ts` |
 | Abuso/custo | Rate limiting por usuário (10/min), limites de tamanho, `max_output_tokens`, timeout | `wrangler.jsonc`, `worker/` |
 | Validação | Entrada e saída validadas com zod (objetos estritos) | `shared/contrato.ts` |
-| Segredos | `OPENAI_API_KEY`, `USUARIOS`, `SESSION_SECRET` só como Secret; `.dev.vars`/`.env` no `.gitignore` | — |
+| Represados | `POST /api/represados` sem login (o app não tem): só devolve quais dos nomes enviados estão no Secret `REPRESADOS`, nunca a lista; mesma origem + header, rate limit por IP, corpo ≤ 1 MB, zod estrito. Quem tem o link pode testar um nome por vez | `worker/represados.ts` |
+| Segredos | `OPENAI_API_KEY`, `USUARIOS`, `SESSION_SECRET`, `REPRESADOS` só como Secret; `.dev.vars`/`.env` no `.gitignore` | — |
 | Cache | `Cache-Control: no-store` em toda a API | `worker/index.ts` |
 | Cabeçalhos | CSP restrita, HSTS, nosniff, Referrer-Policy, anti-clickjacking | `public/_headers` |
 | XSS | Conteúdo de PDF/IA renderizado só como texto pelo React | `src/components/` |

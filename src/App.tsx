@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { lerPdf, ErroLeitura } from "./pdf/extrair";
 import { juntarPdfs } from "./pdf/juntar";
 import { extratosNaoLidos, lerRecibos, lerRepasses, type Recibo, type Repasse } from "./nido/ler";
-import { conferirSem, idRepasse, jaPagosAntes } from "./nido/conferir";
+import { conferirSem, idRepasse, jaPagosAntes, separarRepresados } from "./nido/conferir";
+import { buscarRepresados } from "./api";
+import { nomeSimples } from "../shared/credenciais";
 import { AvisoAtualizacao } from "./components/AvisoAtualizacao";
 import { SeletorPdf, type ArquivoLido } from "./components/SeletorPdf";
 import { Resultado } from "./components/Resultado";
@@ -47,10 +49,13 @@ export function App() {
   const [removidos, setRemovidos] = useState<Set<string>>(new Set());
   // Já pagos em lote anterior saem da soma sozinhos; `liberados` são os que a pessoa confirmou que ainda deve pagar.
   const [liberados, setLiberados] = useState<Set<string>>(new Set());
-  const jaPagos = useMemo(() => (base ? jaPagosAntes(base.repasses, base.anteriores) : []), [base]);
+  // Represados do lote (nomes em `nomeSimples`, vindos do Worker): saem da conferência e da soma do dia.
+  const [represados, setRepresados] = useState<Set<string>>(new Set());
+  const dia = useMemo(() => base && separarRepresados(base.recibos, base.repasses, represados), [base, represados]);
+  const jaPagos = useMemo(() => (base && dia ? jaPagosAntes(dia.repasses, base.anteriores) : []), [base, dia]);
   const casos = useMemo(
-    () => base && conferirSem(base.recibos, base.repasses, new Set([...removidos, ...jaPagos.map((j) => j.id).filter((id) => !liberados.has(id))])),
-    [base, removidos, jaPagos, liberados],
+    () => dia && conferirSem(dia.recibos, dia.repasses, new Set([...removidos, ...jaPagos.map((j) => j.id).filter((id) => !liberados.has(id))])),
+    [dia, removidos, jaPagos, liberados],
   );
   const [pagina, setPagina] = useState<Pagina>("geral");
   const modo: Modo = pagina === "um" ? "um" : "geral";
@@ -61,6 +66,18 @@ export function App() {
     setBase(null);
     setRemovidos(new Set());
     setLiberados(new Set());
+    setRepresados(new Set());
+  };
+
+  /** Pergunta ao Worker quais proprietários são represados. Se falhar, a conferência não começa: um represado não pode cair no pagamento do dia. */
+  const separar = async (repasses: Repasse[]) => {
+    try {
+      const { represados } = await buscarRepresados([...new Set(repasses.map((r) => r.proprietario))]);
+      return represados.map(nomeSimples);
+    } catch (e) {
+      alert(`Não foi possível separar os represados, por isso a conferência não começou. ${(e as Error).message}`);
+      return null;
+    }
   };
 
   // Limpeza de melhor esforço ao sair da página.
@@ -128,7 +145,10 @@ export function App() {
   const prontos =
     !todos.some((a) => a.estado !== "ok") && lidos(arquivos.recibos).length > 0 && lidos(arquivos.repasses).length > 0;
 
-  const iniciar = () => {
+  const iniciar = async () => {
+    const nomes = await separar(lidos(arquivos.repasses));
+    if (!nomes) return;
+    setRepresados(new Set(nomes));
     setBase({ recibos: lidos(arquivos.recibos), repasses: lidos(arquivos.repasses), anteriores: lidos(arquivos.anteriores) });
     setRemovidos(new Set());
     setLiberados(new Set());
@@ -139,8 +159,11 @@ export function App() {
 
   // Extratos adicionados com o resultado na tela: o extrato com o mesmo número e proprietário é substituído
   // (versão corrigida); os demais continuam.
-  const analisarDeNovo = () => {
+  const analisarDeNovo = async () => {
     const novos = lidos(arquivos.repasses);
+    const nomes = await separar(novos);
+    if (!nomes) return;
+    setRepresados((s) => new Set([...s, ...nomes]));
     const ids = new Set(novos.map(idRepasse));
     setBase((b) => b && { ...b, repasses: [...b.repasses.filter((r) => !ids.has(idRepasse(r))), ...novos] });
     setRemovidos((s) => new Set([...s].filter((id) => !ids.has(id))));
@@ -298,6 +321,7 @@ export function App() {
                   aoLiberar={(id, sim) => setLiberados((s) => { const n = new Set(s); if (sim) n.add(id); else n.delete(id); return n; })}
                   aoRemoverRepasse={(id) => setRemovidos((s) => new Set(s).add(id))}
                   aoRestaurar={() => setRemovidos(new Set())}
+                  represados={dia?.separados ?? []}
                 />
               )}
             </>
